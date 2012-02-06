@@ -153,6 +153,7 @@ public class ProjectPreferencesImpl implements FileChangeListener, EditablePrefe
     @Override
     public void saveProjectPreferences() {
         EditableProperties properties = getEditableProperties();
+        validateSettings();
         if (ivyEnabled) {
             saveIvyProjectPreferences(properties);
             enableSharedLibrary();
@@ -164,6 +165,11 @@ public class ProjectPreferencesImpl implements FileChangeListener, EditablePrefe
         saveProperties(properties);
     }
 
+    private void validateSettings(){
+        if (ivyFile==null){
+            ivyEnabled=false;
+        }
+    }
     private void saveIvyProjectPreferences(EditableProperties properties) {
         if (useGlobalRetrieveSettings) {
             deleteIvyRetrieveSettingsProject(properties);

@@ -12,7 +12,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -366,7 +365,7 @@ public class IvyFacadeImpl implements IvyFacade {
                 propertiesFilesFiles.add(FileUtil.toFileObject(new File(propertyFile)));
             }
             return getConfs(ivyFileURL, settingsFileURL, propertiesFilesFiles);
-        } catch (URISyntaxException ex) {
+        } catch (Exception ex) {
             throw new IvyException(ex);
         }
 
