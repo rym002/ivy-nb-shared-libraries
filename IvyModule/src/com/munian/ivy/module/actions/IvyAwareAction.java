@@ -31,8 +31,8 @@ import org.openide.util.actions.Presenter;
 id = "com.munian.ivy.module.actions.IvyAwareAction")
 @ActionRegistration(displayName = "#CTL_IvyAwareAction")
 @ActionReferences({
-    @ActionReference(path = "Projects/" + ProjectUtility.J2SE_PROJECT + "/Actions",position=2500),
-    @ActionReference(path = "Projects/" + ProjectUtility.WEB_PROJECT + "/Actions",position=2500)
+    @ActionReference(path = "Projects/" + ProjectUtility.J2SE_PROJECT + "/Actions",position=2450),
+    @ActionReference(path = "Projects/" + ProjectUtility.WEB_PROJECT + "/Actions",position=2450)
 })
 @Messages({"CTL_IvyAwareAction=Ivy","CTL_CleanCacheAction=Clean Cache","CTL_CleanRepositoryCacheAction=Repository"})
 public class IvyAwareAction extends AbstractAction implements ContextAwareAction{
