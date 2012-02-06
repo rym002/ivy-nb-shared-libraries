@@ -1,0 +1,5 @@
+Manifest-Version: 1.0
+OpenIDE-Module: com.munian.ivy.module
+OpenIDE-Module-Localizing-Bundle: com/munian/ivy/module/Bundle.properties
+OpenIDE-Module-Specification-Version: 1.0
+OpenIDE-Module-Layer: com/munian/ivy/module/layer.xml

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://www.netbeans.org/ns/project/1">
+    <type>org.netbeans.modules.apisupport.project</type>
+    <configuration>
+        <data xmlns="http://www.netbeans.org/ns/nb-module-project/3">
+            <code-name-base>com.munian.ivy.lib</code-name-base>
+            <suite-component/>
+            <module-dependencies/>
+            <public-packages>
+                <package>org.apache.ivy</package>
+                <package>org.apache.ivy.core</package>
+                <package>org.apache.ivy.core.cache</package>
+                <package>org.apache.ivy.core.event</package>
+                <package>org.apache.ivy.core.event.download</package>
+                <package>org.apache.ivy.core.event.resolve</package>
+                <package>org.apache.ivy.core.module.descriptor</package>
+                <package>org.apache.ivy.core.module.id</package>
+                <package>org.apache.ivy.core.publish</package>
+                <package>org.apache.ivy.core.report</package>
+                <package>org.apache.ivy.core.resolve</package>
+                <package>org.apache.ivy.core.settings</package>
+                <package>org.apache.ivy.core.sort</package>
+                <package>org.apache.ivy.plugins.latest</package>
+                <package>org.apache.ivy.plugins.parser</package>
+                <package>org.apache.ivy.plugins.repository</package>
+                <package>org.apache.ivy.util</package>
+                <package>org.apache.ivy.util.extendable</package>
+                <package>org.apache.ivyde.common.completion</package>
+                <package>org.apache.ivyde.common.ivyfile</package>
+                <package>org.apache.ivyde.common.ivysettings</package>
+                <package>org.apache.ivyde.common.model</package>
+            </public-packages>
+            <class-path-extension>
+                <runtime-relative-path>ext/ivy-2.2.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/ivy-2.2.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/ivyde-eclipse.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/ivyde-eclipse.jar</binary-origin>
+            </class-path-extension>
+        </data>
+    </configuration>
+</project>
