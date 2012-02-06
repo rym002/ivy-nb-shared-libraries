@@ -9,7 +9,7 @@ import org.netbeans.spi.project.ui.support.NodeList;
  *
  * @author raymond
  */
-@NodeFactory.Registration(projectType={ProjectUtility.J2SE_PROJECT,ProjectUtility.WEB_PROJECT})
+@NodeFactory.Registration(projectType={ProjectUtility.J2SE_PROJECT,ProjectUtility.WEB_PROJECT},position=1000)
 public class IvyFilesNodeFactory implements NodeFactory{
 
     @Override
