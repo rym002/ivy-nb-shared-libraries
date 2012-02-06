@@ -252,6 +252,8 @@ public class IvyFacadeImpl implements IvyFacade {
             URL settingsFileURL = getSettingsURL(settingsFile);
             List<File> propertiesFilesFiles = toFileList(propertiesFiles);
             return getIvySettings(settingsFileURL, propertiesFilesFiles);
+        } catch (FileStateInvalidException ex) {
+            throw new IvyException(ex);
         } catch (MalformedURLException ex) {
             throw new IvyException(ex);
         }
@@ -309,12 +311,11 @@ public class IvyFacadeImpl implements IvyFacade {
         }
     }
 
-    private URL getSettingsURL(FileObject settingsFile) throws MalformedURLException {
-        String filePath = null;
+    private URL getSettingsURL(FileObject settingsFile) throws MalformedURLException, FileStateInvalidException {
         if (settingsFile != null) {
-            filePath = settingsFile.getPath();
+            return settingsFile.getURL();
         }
-        return getSettingsURL(filePath);
+        return null;
     }
 
     private URL getSettingsURL(String settingsFile) throws MalformedURLException {
@@ -379,6 +380,8 @@ public class IvyFacadeImpl implements IvyFacade {
         try {
             URL settingsFileURL = getSettingsURL(settingsFile);
             return getIvy(settingsFileURL, propertiesFilesFile);
+        } catch (FileStateInvalidException ex) {
+            throw new IvyException(ex);
         } catch (MalformedURLException ex) {
             throw new IvyException(ex);
         }

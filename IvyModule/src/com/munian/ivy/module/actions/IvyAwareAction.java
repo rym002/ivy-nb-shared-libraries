@@ -31,7 +31,8 @@ import org.openide.util.actions.Presenter;
 id = "com.munian.ivy.module.actions.IvyAwareAction")
 @ActionRegistration(displayName = "#CTL_IvyAwareAction")
 @ActionReferences({
-    @ActionReference(path = ProjectUtility.ACTIONS_PATH_MENU)
+    @ActionReference(path = "Projects/" + ProjectUtility.J2SE_PROJECT + "/Actions",position=2500),
+    @ActionReference(path = "Projects/" + ProjectUtility.WEB_PROJECT + "/Actions",position=2500)
 })
 @Messages({"CTL_IvyAwareAction=Ivy","CTL_CleanCacheAction=Clean Cache","CTL_CleanRepositoryCacheAction=Repository"})
 public class IvyAwareAction extends AbstractAction implements ContextAwareAction{
@@ -117,11 +118,14 @@ public class IvyAwareAction extends AbstractAction implements ContextAwareAction
 
         @Override
         public JMenuItem getPopupPresenter() {
+            JMenu menu = null;
             if (isEnabled()){
-                return getMenus();
+                menu = getMenus();
             }else{
-                return null;
+                menu = new JMenu(NbBundle.getMessage(IvyAwareAction.class, "CTL_IvyAwareAction"));
+                menu.setEnabled(false);
             }
+            return menu;
         }
 
         private JMenu getMenus() {
