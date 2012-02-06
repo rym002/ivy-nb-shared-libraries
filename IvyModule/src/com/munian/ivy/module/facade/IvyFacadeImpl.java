@@ -377,8 +377,9 @@ public class IvyFacadeImpl implements IvyFacade {
             propertiesFilesFile.add(FileUtil.toFile(fileObject));
         }
         try {
-            return getIvy(settingsFile.getURL(), propertiesFilesFile);
-        } catch (FileStateInvalidException ex) {
+            URL settingsFileURL = getSettingsURL(settingsFile);
+            return getIvy(settingsFileURL, propertiesFilesFile);
+        } catch (MalformedURLException ex) {
             throw new IvyException(ex);
         }
     }
