@@ -24,7 +24,7 @@ public class IvyNodeList implements NodeList<IvyNodeList.NodeKeys>, PropertyChan
     private ProjectPreferences preferences;
     private IvyFilesNodeChildren filesNodeChildren;
     private IvyFilesNode ivyFilesNode;
-
+    
     public IvyNodeList(Project project) {
         this.preferences = project.getLookup().lookup(ProjectPreferences.class);
     }
