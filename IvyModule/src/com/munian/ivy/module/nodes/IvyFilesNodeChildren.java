@@ -57,5 +57,4 @@ public class IvyFilesNodeChildren extends ChildFactory<FileObject> implements Pr
             refresh(true);
         }
     }
-
 }
