@@ -63,6 +63,7 @@ public class IvyFacadeImpl implements IvyFacade {
             @Override
             public void run() {
                 ProgressHandle progressHandle = ProgressHandleFactory.createHandle(NbBundle.getMessage(IvyFacade.class, "CleanResolution"));
+                progressHandle.start();
                 try {
 
                     cleanResolutionCache(getIvy(project), progressHandle);
@@ -107,6 +108,7 @@ public class IvyFacadeImpl implements IvyFacade {
             @Override
             public void run() {
                 ProgressHandle progressHandle = ProgressHandleFactory.createHandle(NbBundle.getMessage(IvyFacade.class, "CleanRespository"));
+                progressHandle.start();
                 try {
                     cleanRespoitoryCache(getIvy(project), name, progressHandle);
                 } catch (IvyException ex) {
@@ -124,6 +126,7 @@ public class IvyFacadeImpl implements IvyFacade {
             @Override
             public void run() {
                 ProgressHandle progressHandle = ProgressHandleFactory.createHandle(NbBundle.getMessage(IvyFacade.class, "CleanRespository"));
+                progressHandle.start();
                 try {
                     cleanAllRepositoryCache(getIvy(project), progressHandle);
                 } catch (IvyException ex) {
@@ -141,6 +144,7 @@ public class IvyFacadeImpl implements IvyFacade {
             @Override
             public void run() {
                 ProgressHandle progressHandle = ProgressHandleFactory.createHandle(NbBundle.getMessage(IvyFacade.class, "CleanResolution"));
+                progressHandle.start();
                 try {
                     Ivy ivy = getIvy(project);
                     cleanAllRepositoryCache(ivy, progressHandle);
