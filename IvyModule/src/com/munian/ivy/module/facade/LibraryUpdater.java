@@ -2,7 +2,10 @@ package com.munian.ivy.module.facade;
 
 import com.munian.ivy.module.util.ProjectUtility;
 import com.munian.ivy.module.preferences.ProjectPreferences;
+import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
@@ -32,11 +35,11 @@ public class LibraryUpdater implements ArtifactUpdater {
             try {
                 String libraryName = getLibraryName(parsedConfArtifacts.getConf());
                 Library library = manager.getLibrary(libraryName);
-                Map<String, List<URL>> libraryEntries = convertParsedArtifacts(parsedConfArtifacts);
+                Map<String, List<URI>> libraryEntries = convertParsedArtifacts(parsedConfArtifacts);
                 if (library != null) {
                     manager.removeLibrary(library);
                 }
-                manager.createLibrary("j2se", libraryName, libraryEntries);
+                manager.createURILibrary("j2se", libraryName, libraryEntries);
             } catch (IOException ex) {
                 Exceptions.printStackTrace(ex);
             }
@@ -47,8 +50,8 @@ public class LibraryUpdater implements ArtifactUpdater {
         return LIBRARY_NAME_PREFIX + conf;
     }
 
-    private Map<String, List<URL>> convertParsedArtifacts(ParsedConfArtifacts artifacts) {
-        Map<String, List<URL>> retVal = new HashMap<String, List<URL>>();
+    private Map<String, List<URI>> convertParsedArtifacts(ParsedConfArtifacts artifacts) {
+        Map<String, List<URI>> retVal = new HashMap<String, List<URI>>();
         retVal.put("classpath", artifacts.getClasspathJars());
         retVal.put("javadoc", artifacts.getJavadocJars());
         retVal.put("src", artifacts.getSourceJars());
@@ -73,4 +76,16 @@ public class LibraryUpdater implements ArtifactUpdater {
             }
         }
     }
+
+    @Override
+    public String getRetrieveRoot(ProjectPreferences projectPreferences) {
+        try {
+            File libraryLocation = new File(projectPreferences.getSharedLibraryLocation().toURI());
+            return libraryLocation.getParent();
+        } catch (URISyntaxException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        return null;
+    }    
+    
 }

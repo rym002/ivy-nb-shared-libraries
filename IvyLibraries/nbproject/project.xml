@@ -18,6 +18,7 @@
                 <package>org.apache.ivy.core.publish</package>
                 <package>org.apache.ivy.core.report</package>
                 <package>org.apache.ivy.core.resolve</package>
+                <package>org.apache.ivy.core.retrieve</package>
                 <package>org.apache.ivy.core.settings</package>
                 <package>org.apache.ivy.core.sort</package>
                 <package>org.apache.ivy.plugins.latest</package>

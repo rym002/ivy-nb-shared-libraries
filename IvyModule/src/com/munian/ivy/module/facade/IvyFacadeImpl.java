@@ -19,19 +19,26 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
 import org.apache.ivy.Ivy;
+import org.apache.ivy.core.IvyPatternHelper;
 import org.apache.ivy.core.cache.RepositoryCacheManager;
 import org.apache.ivy.core.cache.ResolutionCacheManager;
+import org.apache.ivy.core.module.descriptor.Artifact;
 import org.apache.ivy.core.module.descriptor.ModuleDescriptor;
 import org.apache.ivy.core.report.ArtifactDownloadReport;
+import org.apache.ivy.core.report.ConfigurationResolveReport;
 import org.apache.ivy.core.report.ResolveReport;
 import org.apache.ivy.core.resolve.ResolveOptions;
+import org.apache.ivy.core.retrieve.RetrieveOptions;
 import org.apache.ivy.core.settings.IvySettings;
 import org.apache.ivy.plugins.parser.ModuleDescriptorParserRegistry;
+import org.apache.ivy.util.Message;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectInformation;
 import org.netbeans.api.project.ProjectUtils;
+import org.netbeans.spi.project.libraries.support.LibrariesSupport;
+import org.netbeans.spi.project.support.ant.PropertyUtils;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileStateInvalidException;
 import org.openide.filesystems.FileUtil;
@@ -47,6 +54,7 @@ import org.openide.util.lookup.ServiceProvider;
 public class IvyFacadeImpl implements IvyFacade {
 
     private RequestProcessor requestProcessor = new RequestProcessor(IvyFacade.class);
+    private static final String RETRIEVE_PATTERN = "/ivy/[conf]/[type]/[artifact]-[revision].[ext]";
 
     @Override
     public void cleanResolutionCache(final Project project) {
@@ -56,8 +64,8 @@ public class IvyFacadeImpl implements IvyFacade {
             public void run() {
                 ProgressHandle progressHandle = ProgressHandleFactory.createHandle(NbBundle.getMessage(IvyFacade.class, "CleanResolution"));
                 try {
-                    
-                    cleanResolutionCache(getIvy(project),progressHandle);
+
+                    cleanResolutionCache(getIvy(project), progressHandle);
                 } catch (IvyException ex) {
                     Exceptions.printStackTrace(ex);
                 }
@@ -66,13 +74,13 @@ public class IvyFacadeImpl implements IvyFacade {
         });
     }
 
-    private void cleanResolutionCache(Ivy ivy,ProgressHandle progressHandle) {
+    private void cleanResolutionCache(Ivy ivy, ProgressHandle progressHandle) {
         progressHandle.setDisplayName(NbBundle.getMessage(IvyFacade.class, "CleanResolution"));
         ResolutionCacheManager resolutionCacheManager = ivy.getSettings().getResolutionCacheManager();
         resolutionCacheManager.clean();
     }
 
-    private void cleanAllRepositoryCache(Ivy ivy,ProgressHandle progressHandle) {
+    private void cleanAllRepositoryCache(Ivy ivy, ProgressHandle progressHandle) {
         progressHandle.setDisplayName(NbBundle.getMessage(IvyFacade.class, "CleanAllRespository"));
         RepositoryCacheManager[] managers = ivy.getSettings().getRepositoryCacheManagers();
         for (RepositoryCacheManager repositoryCacheManager : managers) {
@@ -80,7 +88,7 @@ public class IvyFacadeImpl implements IvyFacade {
         }
     }
 
-    private void cleanRespoitoryCache(Ivy ivy, String name,ProgressHandle progressHandle) {
+    private void cleanRespoitoryCache(Ivy ivy, String name, ProgressHandle progressHandle) {
         progressHandle.setDisplayName(NbBundle.getMessage(IvyFacade.class, "CleanResolution") + " " + name);
         RepositoryCacheManager manager = ivy.getSettings().getRepositoryCacheManager(name);
         manager.clean();
@@ -117,7 +125,7 @@ public class IvyFacadeImpl implements IvyFacade {
             public void run() {
                 ProgressHandle progressHandle = ProgressHandleFactory.createHandle(NbBundle.getMessage(IvyFacade.class, "CleanRespository"));
                 try {
-                    cleanAllRepositoryCache(getIvy(project),progressHandle);
+                    cleanAllRepositoryCache(getIvy(project), progressHandle);
                 } catch (IvyException ex) {
                     Exceptions.printStackTrace(ex);
                 }
@@ -135,8 +143,8 @@ public class IvyFacadeImpl implements IvyFacade {
                 ProgressHandle progressHandle = ProgressHandleFactory.createHandle(NbBundle.getMessage(IvyFacade.class, "CleanResolution"));
                 try {
                     Ivy ivy = getIvy(project);
-                    cleanAllRepositoryCache(ivy,progressHandle);
-                    cleanResolutionCache(ivy,progressHandle);
+                    cleanAllRepositoryCache(ivy, progressHandle);
+                    cleanResolutionCache(ivy, progressHandle);
                 } catch (IvyException ex) {
                     Exceptions.printStackTrace(ex);
                 }
@@ -167,8 +175,12 @@ public class IvyFacadeImpl implements IvyFacade {
                 try {
                     ProjectInformation projectInformation = ProjectUtils.getInformation(project);
                     ProjectPreferences projectPreferences = project.getLookup().lookup(ProjectPreferences.class);
+                    ArtifactUpdater updater = project.getLookup().lookup(ArtifactUpdater.class);
                     Ivy ivy = getIvy(projectPreferences.getIvySettingsFile(), projectPreferences.getIvyPropertiesFiles());
                     logger = new IOTabIvyLogger(projectInformation.getDisplayName(), IOTabIvyLogger.TAB_SUFFIX);
+
+                    logger.log(NbBundle.getMessage(IvyFacade.class, "StartResolve"), Message.MSG_INFO);
+
                     IvyProgressHandleListener transferListener = new IvyProgressHandleListener(projectInformation.getDisplayName() + " " + NbBundle.getMessage(IvyProgressHandleListener.class, "Resolving"));
                     IvyProgressHandleTransferListener ivyProgressHandleTransferListener = new IvyProgressHandleTransferListener(projectInformation.getDisplayName());
                     ivy.getLoggerEngine().setDefaultLogger(logger);
@@ -176,16 +188,26 @@ public class IvyFacadeImpl implements IvyFacade {
                     ivy.getEventManager().addTransferListener(ivyProgressHandleTransferListener);
                     URL ivyFileLocation = projectPreferences.getIvyFile().getURL();
                     String[] confs = getConfs(projectPreferences.getIvyFile(), projectPreferences.getIvySettingsFile(), projectPreferences.getIvyPropertiesFiles());
-                    List<ParsedConfArtifacts> parsedArtifacts = new ArrayList<ParsedConfArtifacts>();
-                    for (String string : confs) {
-                        transferListener.setConf(string);
-                        ResolveOptions resolveOption = new ResolveOptions().setConfs(new String[]{string});
-                        resolveOption.setValidate(ivy.getSettings().doValidate());
-                        ResolveReport report = ivy.resolve(ivyFileLocation, resolveOption);
-                        parsedArtifacts.add(parseArtifactsInReport(string, report, projectPreferences));
-                    }
-                    ArtifactUpdater updater = project.getLookup().lookup(ArtifactUpdater.class);
+
+                    transferListener.setConf(confs.toString());
+                    ResolveOptions resolveOption = new ResolveOptions().setConfs(confs);
+                    resolveOption.setValidate(ivy.getSettings().doValidate());
+                    ResolveReport report = ivy.resolve(ivyFileLocation, resolveOption);
+
+                    logger.log(NbBundle.getMessage(IvyFacade.class, "EndResolve"), Message.MSG_INFO);
+                    logger.log(NbBundle.getMessage(IvyFacade.class, "StartRetrieve"), Message.MSG_INFO);
+
+                    RetrieveOptions retrieveOptions = new RetrieveOptions().setConfs(confs).setSync(true);
+                    String retrieveRoot = updater.getRetrieveRoot(projectPreferences);
+                    String projectRetrievePattern = retrieveRoot + RETRIEVE_PATTERN;
+                    ivy.retrieve(report.getModuleDescriptor().getResolvedModuleRevisionId(), projectRetrievePattern, retrieveOptions);
+
+                    logger.log(NbBundle.getMessage(IvyFacade.class, "EndRetrieve"), Message.MSG_INFO);
+                    logger.log(NbBundle.getMessage(IvyFacade.class, "StartLibrariesUpdate"), Message.MSG_INFO);
+
+                    List<ParsedConfArtifacts> parsedArtifacts = parseArtifactsInReport(report, projectPreferences, retrieveRoot);
                     updater.update(projectPreferences, parsedArtifacts);
+                    logger.log(NbBundle.getMessage(IvyFacade.class, "EndLibrariesUpdate"), Message.MSG_INFO);
 
                 } catch (IvyException ex) {
                     Exceptions.printStackTrace(ex);
@@ -202,30 +224,46 @@ public class IvyFacadeImpl implements IvyFacade {
         });
     }
 
-    private ParsedConfArtifacts parseArtifactsInReport(String conf, ResolveReport report, ProjectPreferences preferences) {
-        ParsedConfArtifacts artifacts = new ParsedConfArtifacts(conf);
-        ArtifactDownloadReport[] artifactDownloadReports = report.getAllArtifactsReports();
+    private List<ParsedConfArtifacts> parseArtifactsInReport(ResolveReport report, ProjectPreferences preferences, String retrieveRoot) {
+        List<ParsedConfArtifacts> parsedArtifacts = new ArrayList<ParsedConfArtifacts>();
+        String[] confs = report.getConfigurations();
         IvyRetrieveSettings retrieveSettings = preferences.getProjectRetrieveSettings();
-        for (ArtifactDownloadReport artifactDownloadReport : artifactDownloadReports) {
-            try {
+        File retriveRootFile = new File(retrieveRoot);
+        for (String conf : confs) {
+            ParsedConfArtifacts artifacts = new ParsedConfArtifacts(conf);
+            parsedArtifacts.add(artifacts);
+
+            ConfigurationResolveReport resolveReport = report.getConfigurationReport(conf);
+            ArtifactDownloadReport[] artifactDownloadReports = resolveReport.getAllArtifactsReports();
+            for (ArtifactDownloadReport artifactDownloadReport : artifactDownloadReports) {
                 if (artifactDownloadReport.getLocalFile() != null) {
                     if (isMatchingType(retrieveSettings.getJarTypes(), artifactDownloadReport)) {
-                        artifacts.getClasspathJars().add(artifactDownloadReport.getLocalFile().toURI().toURL());
+                        URI libraryJar = getLibraryJarPath(conf, artifactDownloadReport.getArtifact(), retrieveRoot, retriveRootFile);
+                        artifacts.getClasspathJars().add(libraryJar);
                     } else if (isMatchingType(retrieveSettings.getSourceTypes(), artifactDownloadReport)) {
                         if (isMatchingSuffix(retrieveSettings.getSourceSuffixes(), artifactDownloadReport)) {
-                            artifacts.getSourceJars().add(artifactDownloadReport.getLocalFile().toURI().toURL());
+                            URI libraryJar = getLibraryJarPath(conf, artifactDownloadReport.getArtifact(), retrieveRoot, retriveRootFile);
+                            artifacts.getSourceJars().add(libraryJar);
                         }
                     } else if (isMatchingType(retrieveSettings.getJavadocTypes(), artifactDownloadReport)) {
                         if (isMatchingSuffix(retrieveSettings.getJavadocSuffixes(), artifactDownloadReport)) {
-                            artifacts.getJavadocJars().add(artifactDownloadReport.getLocalFile().toURI().toURL());
+                            URI libraryJar = getLibraryJarPath(conf, artifactDownloadReport.getArtifact(), retrieveRoot, retriveRootFile);
+                            artifacts.getJavadocJars().add(libraryJar);
                         }
                     }
                 }
-            } catch (MalformedURLException ex) {
-                Exceptions.printStackTrace(ex);
             }
         }
-        return artifacts;
+
+        return parsedArtifacts;
+    }
+
+    private URI getLibraryJarPath(String conf,Artifact artifact,String retrieveRoot, File retrieveRootFile) {
+        String subPath = IvyPatternHelper.substitute(RETRIEVE_PATTERN, artifact, conf);
+        String fullRetrievePath = retrieveRoot + subPath;
+        File retrievedFile = new File(fullRetrievePath);
+        String relativePath = PropertyUtils.relativizeFile(retrieveRootFile, retrievedFile);
+        return LibrariesSupport.convertFilePathToURI(relativePath);
     }
 
     private boolean isMatchingType(Collection<String> acceptedTypes, ArtifactDownloadReport artifactDownloadReport) {
@@ -261,10 +299,7 @@ public class IvyFacadeImpl implements IvyFacade {
     public IvySettings getIvySettings(String settingsFile, Collection<String> propertiesFiles) throws IvyException {
         try {
             URL settingsFileURL = getSettingsURL(settingsFile);
-            List<File> propertiesFilesFiles = new ArrayList<File>(propertiesFiles.size());
-            for (String string : propertiesFiles) {
-                propertiesFilesFiles.add(new File(string));
-            }
+            List<File> propertiesFilesFiles = toFileListFromString(propertiesFiles);
 
             return getIvySettings(settingsFileURL, propertiesFilesFiles);
         } catch (MalformedURLException ex) {
@@ -280,22 +315,27 @@ public class IvyFacadeImpl implements IvyFacade {
         return retVal;
     }
 
+    private List<File> toFileListFromString(Collection<String> files) {
+        List<File> retVal = new ArrayList<File>(files.size());
+        for (String file : files) {
+            retVal.add(new File(file));
+        }
+        return retVal;
+    }
+
     private String[] getConfs(FileObject ivyFile, FileObject settingsFile, Collection<FileObject> propertiesFiles) throws IvyException {
         try {
             URL ivyFileURL = ivyFile.getURL();
-            URL settingsFileURL = null;
-            if (settingsFile != null) {
-                settingsFileURL = settingsFile.getURL();
-            }
+            URL settingsFileURL = getSettingsURL(settingsFile);
             List<File> propertiesFilesFiles = toFileList(propertiesFiles);
-            return getConfs(ivyFileURL, settingsFileURL, propertiesFilesFiles);
+            Ivy ivy = getIvy(settingsFileURL, propertiesFilesFiles);
+            return getConfs(ivyFileURL, ivy);
         } catch (Exception ex) {
             throw new IvyException(ex);
         }
     }
 
-    public String[] getConfs(URL ivyFile, URL settingsFile, Collection<File> propertiesFiles) throws IvyException {
-        Ivy ivy = getIvy(settingsFile, propertiesFiles);
+    private String[] getConfs(URL ivyFile, Ivy ivy) throws IvyException {
         ModuleDescriptor moduleDescriptor = getModuleDescriptor(ivy, ivyFile);
 
         return moduleDescriptor.getConfigurationsNames();
@@ -352,19 +392,13 @@ public class IvyFacadeImpl implements IvyFacade {
     }
 
     private String[] getConfs(String ivyFile, String settingsFile, Collection<String> propertiesFiles) throws IvyException {
-        FileObject ivyFileURL;
         try {
-            ivyFileURL = FileUtil.toFileObject(new File(new URI(ivyFile)));
-            FileObject settingsFileURL = null;
-            if (settingsFile != null && !settingsFile.isEmpty()) {
-                settingsFileURL = FileUtil.toFileObject(new File(new URI(settingsFile)));
-            }
+            URL ivyFileURL = new URI(ivyFile).toURL();
+            URL settingsFileURL = getSettingsURL(settingsFile);
+            List<File> propertiesFilesFiles = toFileListFromString(propertiesFiles);
+            Ivy ivy = getIvy(settingsFileURL, propertiesFilesFiles);
 
-            List<FileObject> propertiesFilesFiles = new ArrayList<FileObject>(propertiesFiles.size());
-            for (String propertyFile : propertiesFiles) {
-                propertiesFilesFiles.add(FileUtil.toFileObject(new File(propertyFile)));
-            }
-            return getConfs(ivyFileURL, settingsFileURL, propertiesFilesFiles);
+            return getConfs(ivyFileURL, ivy);
         } catch (Exception ex) {
             throw new IvyException(ex);
         }
@@ -372,10 +406,7 @@ public class IvyFacadeImpl implements IvyFacade {
     }
 
     private Ivy getIvy(FileObject settingsFile, Collection<FileObject> propertiesFiles) throws IvyException {
-        Collection<File> propertiesFilesFile = new ArrayList<File>(propertiesFiles.size());
-        for (FileObject fileObject : propertiesFiles) {
-            propertiesFilesFile.add(FileUtil.toFile(fileObject));
-        }
+        Collection<File> propertiesFilesFile = toFileList(propertiesFiles);
         try {
             URL settingsFileURL = getSettingsURL(settingsFile);
             return getIvy(settingsFileURL, propertiesFilesFile);
@@ -392,6 +423,9 @@ public class IvyFacadeImpl implements IvyFacade {
             Ivy ivy = Ivy.newInstance(settings);
             ivy.configureDefault();
             ivy.setSettings(settings);
+            if (settingsFile != null) {
+                ivy.configure(settingsFile);
+            }
             return ivy;
         } catch (ParseException ex) {
             throw new IvyException(ex);

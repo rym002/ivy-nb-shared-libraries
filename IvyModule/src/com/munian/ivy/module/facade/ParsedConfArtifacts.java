@@ -1,6 +1,6 @@
 package com.munian.ivy.module.facade;
 
-import java.net.URL;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,9 +9,9 @@ import java.util.List;
  */
 public class ParsedConfArtifacts {
     private String conf;
-    private List<URL> classpathJars = new ArrayList();
-    private List<URL> sourceJars = new ArrayList();
-    private List<URL> javadocJars = new ArrayList();
+    private List<URI> classpathJars = new ArrayList<URI>();
+    private List<URI> sourceJars = new ArrayList<URI>();
+    private List<URI> javadocJars = new ArrayList<URI>();
 
     public ParsedConfArtifacts(String conf) {
         this.conf = conf;
@@ -21,15 +21,15 @@ public class ParsedConfArtifacts {
         return conf;
     }
 
-    public List<URL> getClasspathJars() {
+    public List<URI> getClasspathJars() {
         return classpathJars;
     }
 
-    public List<URL> getJavadocJars() {
+    public List<URI> getJavadocJars() {
         return javadocJars;
     }
 
-    public List<URL> getSourceJars() {
+    public List<URI> getSourceJars() {
         return sourceJars;
     }
     

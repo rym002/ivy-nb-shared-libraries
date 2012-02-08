@@ -12,4 +12,6 @@ public interface ArtifactUpdater {
     public void update(ProjectPreferences preferences, List<ParsedConfArtifacts> parsedArtifacts);
     
     public void removeIvyArtifacts(ProjectPreferences preferences);
+    
+    public String getRetrieveRoot(ProjectPreferences projectPreferences);
 }
