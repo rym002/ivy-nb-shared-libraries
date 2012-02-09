@@ -36,4 +36,6 @@ public interface ProjectPreferences extends PropertyChangeListener,PropertyChang
     public URL getSharedLibraryLocation();
     
     public void autoResolveProject();
+    
+    public boolean isUseCachePath();
 }

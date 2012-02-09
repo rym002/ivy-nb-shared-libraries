@@ -45,6 +45,7 @@ public class ProjectPreferencesImpl implements FileChangeListener, EditablePrefe
     private static final String IVY_PROPERTIES_FILES_KEY = Utilities.PROPERTIES_PREFIX + "propertiesFiles";
     private static final String IVY_GLOBAL_RETRIEVE_NAME_KEY = Utilities.PROPERTIES_PREFIX + "globalRetrieveSettingsName";
     private static final String IVY_AUTO_RESOLVE_KEY = Utilities.PROPERTIES_PREFIX + "autoResolve";
+    private static final String IVY_USE_CACHE_PATH_KEY = Utilities.PROPERTIES_PREFIX + "useCachePath";
     public static final String PROJECT_PROPERTIES_PATH = "nbproject/ivybean.properties";
     public static final String DEFAULT_SHARED_LIBRARY_PATH = "nbproject/private/ivyLibraries/nblibrary.properties";
     private Project project;
@@ -58,6 +59,7 @@ public class ProjectPreferencesImpl implements FileChangeListener, EditablePrefe
     private String globalRetrieveSettingsName;
     private IvyRetrieveSettings projectRetrieveSettings;
     private boolean autoResolve;
+    private boolean useCachePath=true;
 
     public ProjectPreferencesImpl(Project project) {
         this.project = project;
@@ -94,6 +96,8 @@ public class ProjectPreferencesImpl implements FileChangeListener, EditablePrefe
             }
 
             autoResolve = Utilities.getBoolean(properties.get(IVY_AUTO_RESOLVE_KEY), true);
+            useCachePath = Utilities.getBoolean(properties.get(IVY_USE_CACHE_PATH_KEY), true);
+            
         } else {
             String templateName = optionsLookup.getDefaultTemplateName();
             projectRetrieveSettings = optionsLookup.getIvyRetrieveSettingsTemplate(templateName);
@@ -181,6 +185,7 @@ public class ProjectPreferencesImpl implements FileChangeListener, EditablePrefe
 
         properties.put(IVY_AUTO_RESOLVE_KEY, Boolean.toString(autoResolve));
         properties.put(IVY_ENABLED_KEY, Boolean.toString(ivyEnabled));
+        properties.put(IVY_USE_CACHE_PATH_KEY, Boolean.toString(useCachePath));
 
         properties.put(IVY_FILE_KEY, getIvyFileString());
         properties.put(IVY_SETTINGS_FILE_KEY, getIvySettingsString());
@@ -221,6 +226,7 @@ public class ProjectPreferencesImpl implements FileChangeListener, EditablePrefe
         properties.remove(IVY_PROPERTIES_FILES_KEY);
 
         properties.remove(IvyRetrieveSettings.PROP_JAR_TYPES);
+        properties.remove(IVY_USE_CACHE_PATH_KEY);
 
         deleteIvyRetrieveSettingsProject(properties);
     }
@@ -511,5 +517,15 @@ public class ProjectPreferencesImpl implements FileChangeListener, EditablePrefe
                 helper.setLibrariesLocation("");
             }
         }
+    }
+
+    @Override
+    public boolean isUseCachePath() {
+        return useCachePath;
+    }
+
+    @Override
+    public void setUseCachePath(boolean useCachePath) {
+        this.useCachePath = useCachePath;
     }
 }

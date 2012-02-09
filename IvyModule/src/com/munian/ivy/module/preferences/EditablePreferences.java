@@ -41,4 +41,6 @@ public interface EditablePreferences extends ProjectPreferences{
 
     public void setIvyEnabled(boolean ivyEnabled);
     
+    public void setUseCachePath(boolean useCachePath);
+    
 }

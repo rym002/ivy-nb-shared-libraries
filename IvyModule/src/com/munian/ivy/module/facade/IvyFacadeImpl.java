@@ -199,17 +199,21 @@ public class IvyFacadeImpl implements IvyFacade {
                     ResolveReport report = ivy.resolve(ivyFileLocation, resolveOption);
 
                     logger.log(NbBundle.getMessage(IvyFacade.class, "EndResolve"), Message.MSG_INFO);
-                    logger.log(NbBundle.getMessage(IvyFacade.class, "StartRetrieve"), Message.MSG_INFO);
-
-                    RetrieveOptions retrieveOptions = new RetrieveOptions().setConfs(confs).setSync(true);
+                    
                     String retrieveRoot = updater.getRetrieveRoot(projectPreferences);
-                    String projectRetrievePattern = retrieveRoot + RETRIEVE_PATTERN;
-                    ivy.retrieve(report.getModuleDescriptor().getResolvedModuleRevisionId(), projectRetrievePattern, retrieveOptions);
+                    
+                    if (!projectPreferences.isUseCachePath()){
+                        logger.log(NbBundle.getMessage(IvyFacade.class, "StartRetrieve"), Message.MSG_INFO);
 
-                    logger.log(NbBundle.getMessage(IvyFacade.class, "EndRetrieve"), Message.MSG_INFO);
+                        RetrieveOptions retrieveOptions = new RetrieveOptions().setConfs(confs).setSync(true);
+                        String projectRetrievePattern = retrieveRoot + RETRIEVE_PATTERN;
+                        ivy.retrieve(report.getModuleDescriptor().getResolvedModuleRevisionId(), projectRetrievePattern, retrieveOptions);
+
+                        logger.log(NbBundle.getMessage(IvyFacade.class, "EndRetrieve"), Message.MSG_INFO);
+                    }
                     logger.log(NbBundle.getMessage(IvyFacade.class, "StartLibrariesUpdate"), Message.MSG_INFO);
 
-                    List<ParsedConfArtifacts> parsedArtifacts = parseArtifactsInReport(report, projectPreferences, retrieveRoot);
+                    List<ParsedConfArtifacts> parsedArtifacts = parseArtifactsInReport(report, projectPreferences, retrieveRoot, projectPreferences.isUseCachePath());
                     updater.update(projectPreferences, parsedArtifacts);
                     logger.log(NbBundle.getMessage(IvyFacade.class, "EndLibrariesUpdate"), Message.MSG_INFO);
 
@@ -228,7 +232,7 @@ public class IvyFacadeImpl implements IvyFacade {
         });
     }
 
-    private List<ParsedConfArtifacts> parseArtifactsInReport(ResolveReport report, ProjectPreferences preferences, String retrieveRoot) {
+    private List<ParsedConfArtifacts> parseArtifactsInReport(ResolveReport report, ProjectPreferences preferences, String retrieveRoot, boolean useCachePath) {
         List<ParsedConfArtifacts> parsedArtifacts = new ArrayList<ParsedConfArtifacts>();
         String[] confs = report.getConfigurations();
         IvyRetrieveSettings retrieveSettings = preferences.getProjectRetrieveSettings();
@@ -242,16 +246,16 @@ public class IvyFacadeImpl implements IvyFacade {
             for (ArtifactDownloadReport artifactDownloadReport : artifactDownloadReports) {
                 if (artifactDownloadReport.getLocalFile() != null) {
                     if (isMatchingType(retrieveSettings.getJarTypes(), artifactDownloadReport)) {
-                        URI libraryJar = getLibraryJarPath(conf, artifactDownloadReport.getArtifact(), retrieveRoot, retriveRootFile);
+                        URI libraryJar = getLibraryJarPath(conf, artifactDownloadReport.getArtifact(), retrieveRoot, retriveRootFile,useCachePath,artifactDownloadReport.getLocalFile());
                         artifacts.getClasspathJars().add(libraryJar);
                     } else if (isMatchingType(retrieveSettings.getSourceTypes(), artifactDownloadReport)) {
                         if (isMatchingSuffix(retrieveSettings.getSourceSuffixes(), artifactDownloadReport)) {
-                            URI libraryJar = getLibraryJarPath(conf, artifactDownloadReport.getArtifact(), retrieveRoot, retriveRootFile);
+                            URI libraryJar = getLibraryJarPath(conf, artifactDownloadReport.getArtifact(), retrieveRoot, retriveRootFile,useCachePath,artifactDownloadReport.getLocalFile());
                             artifacts.getSourceJars().add(libraryJar);
                         }
                     } else if (isMatchingType(retrieveSettings.getJavadocTypes(), artifactDownloadReport)) {
                         if (isMatchingSuffix(retrieveSettings.getJavadocSuffixes(), artifactDownloadReport)) {
-                            URI libraryJar = getLibraryJarPath(conf, artifactDownloadReport.getArtifact(), retrieveRoot, retriveRootFile);
+                            URI libraryJar = getLibraryJarPath(conf, artifactDownloadReport.getArtifact(), retrieveRoot, retriveRootFile,useCachePath,artifactDownloadReport.getLocalFile());
                             artifacts.getJavadocJars().add(libraryJar);
                         }
                     }
@@ -262,12 +266,16 @@ public class IvyFacadeImpl implements IvyFacade {
         return parsedArtifacts;
     }
 
-    private URI getLibraryJarPath(String conf,Artifact artifact,String retrieveRoot, File retrieveRootFile) {
-        String subPath = IvyPatternHelper.substitute(RETRIEVE_PATTERN, artifact, conf);
-        String fullRetrievePath = retrieveRoot + subPath;
-        File retrievedFile = new File(fullRetrievePath);
-        String relativePath = PropertyUtils.relativizeFile(retrieveRootFile, retrievedFile);
-        return LibrariesSupport.convertFilePathToURI(relativePath);
+    private URI getLibraryJarPath(String conf,Artifact artifact,String retrieveRoot, File retrieveRootFile, boolean useCachePath, File cachePath) {
+        if (useCachePath){
+            return cachePath.toURI();
+        }else{
+            String subPath = IvyPatternHelper.substitute(RETRIEVE_PATTERN, artifact, conf);
+            String fullRetrievePath = retrieveRoot + subPath;
+            File retrievedFile = new File(fullRetrievePath);
+            String relativePath = PropertyUtils.relativizeFile(retrieveRootFile, retrievedFile);
+            return LibrariesSupport.convertFilePathToURI(relativePath);
+        }
     }
 
     private boolean isMatchingType(Collection<String> acceptedTypes, ArtifactDownloadReport artifactDownloadReport) {

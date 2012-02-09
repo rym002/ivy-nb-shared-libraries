@@ -88,6 +88,7 @@ public class CustomizerPanel extends javax.swing.JPanel {
         propertiesFileListScroll = new javax.swing.JScrollPane();
         propertiesFileList = new javax.swing.JList();
         ivyPropertiesFileDeleteBtn = new javax.swing.JButton();
+        useCachePathCheckBox = new javax.swing.JCheckBox();
 
         setLayout(new java.awt.GridBagLayout());
 
@@ -291,6 +292,12 @@ public class CustomizerPanel extends javax.swing.JPanel {
         gridBagConstraints.weightx = 0.5;
         gridBagConstraints.weighty = 1.0;
         add(ivyPropertiesFileDeleteBtn, gridBagConstraints);
+
+        useCachePathCheckBox.setText(org.openide.util.NbBundle.getMessage(CustomizerPanel.class, "CustomizerPanel.useCachePathCheckBox.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 2;
+        gridBagConstraints.gridy = 0;
+        add(useCachePathCheckBox, gridBagConstraints);
     }// </editor-fold>//GEN-END:initComponents
 
     private void enableIvyCbxItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_enableIvyCbxItemStateChanged
@@ -443,6 +450,7 @@ public class CustomizerPanel extends javax.swing.JPanel {
         }
         retrieveSettingsTemplatesCb.setModel(new javax.swing.DefaultComboBoxModel(optionsLookup.getRetrieveSettingsTemplateNames().toArray()));
         overridableOptions1.loadPanel(editablePreferences.getProjectRetrieveSettings());
+        useCachePathCheckBox.setSelected(editablePreferences.isUseCachePath());
     }
 
     /**
@@ -462,7 +470,8 @@ public class CustomizerPanel extends javax.swing.JPanel {
             editablePreferences.setUseGlobalRetrieveSettings(useRetrieveSettingsTemplateCbx.isSelected());
             editablePreferences.setGlobalRetrieveSettingsName((String) retrieveSettingsTemplatesCb.getSelectedItem());
             editablePreferences.setIvySettingsFile(ivySettingsFileText.getText());
-
+            editablePreferences.setUseCachePath(useCachePathCheckBox.isSelected());
+            
             overridableOptions1.readPanel(editablePreferences.getProjectRetrieveSettings());
 
             editablePreferences.clearPropertiesFiles();
@@ -489,6 +498,7 @@ public class CustomizerPanel extends javax.swing.JPanel {
     private javax.swing.JList propertiesFileList;
     private javax.swing.JScrollPane propertiesFileListScroll;
     private javax.swing.JComboBox retrieveSettingsTemplatesCb;
+    private javax.swing.JCheckBox useCachePathCheckBox;
     private javax.swing.JCheckBox useRetrieveSettingsTemplateCbx;
     // End of variables declaration//GEN-END:variables
 }
