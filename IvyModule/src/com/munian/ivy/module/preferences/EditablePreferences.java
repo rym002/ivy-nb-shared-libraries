@@ -43,4 +43,5 @@ public interface EditablePreferences extends ProjectPreferences{
     
     public void setUseCachePath(boolean useCachePath);
     
+    public void setAllConfsSelected(boolean allConfsSelected);
 }

@@ -1,9 +1,9 @@
 package com.munian.ivy.module.preferences;
 
 import com.munian.ivy.module.facade.ArtifactUpdater;
+import com.munian.ivy.module.facade.IvyFacade;
 import com.munian.ivy.module.options.IvyOptions;
 import com.munian.ivy.module.options.IvyRetrieveSettings;
-import com.munian.ivy.module.facade.IvyFacade;
 import com.munian.ivy.module.util.ProjectUtility;
 import com.munian.ivy.module.util.Utilities;
 import java.beans.PropertyChangeEvent;
@@ -20,13 +20,7 @@ import org.netbeans.spi.project.LookupProvider.Registration.ProjectType;
 import org.netbeans.spi.project.ProjectServiceProvider;
 import org.netbeans.spi.project.support.ant.AntProjectHelper;
 import org.netbeans.spi.project.support.ant.EditableProperties;
-import org.openide.filesystems.FileAttributeEvent;
-import org.openide.filesystems.FileChangeListener;
-import org.openide.filesystems.FileEvent;
-import org.openide.filesystems.FileObject;
-import org.openide.filesystems.FileRenameEvent;
-import org.openide.filesystems.FileStateInvalidException;
-import org.openide.filesystems.FileUtil;
+import org.openide.filesystems.*;
 import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 
@@ -46,6 +40,8 @@ public class ProjectPreferencesImpl implements FileChangeListener, EditablePrefe
     private static final String IVY_GLOBAL_RETRIEVE_NAME_KEY = Utilities.PROPERTIES_PREFIX + "globalRetrieveSettingsName";
     private static final String IVY_AUTO_RESOLVE_KEY = Utilities.PROPERTIES_PREFIX + "autoResolve";
     private static final String IVY_USE_CACHE_PATH_KEY = Utilities.PROPERTIES_PREFIX + "useCachePath";
+    private static final String IVY_ALL_CONFS_SELECTED_KEY = Utilities.PROPERTIES_PREFIX + "allConfsSelected";
+    private static final String IVY_SELECTED_CONFS_KEY = Utilities.PROPERTIES_PREFIX + "selectedConfs";
     public static final String PROJECT_PROPERTIES_PATH = "nbproject/ivybean.properties";
     public static final String DEFAULT_SHARED_LIBRARY_PATH = "nbproject/private/ivyLibraries/nblibrary.properties";
     private Project project;
@@ -60,6 +56,9 @@ public class ProjectPreferencesImpl implements FileChangeListener, EditablePrefe
     private IvyRetrieveSettings projectRetrieveSettings;
     private boolean autoResolve;
     private boolean useCachePath=true;
+    private Collection<String> selectedConfs = new ArrayList<String>();
+    private boolean allConfsSelected;
+    
 
     public ProjectPreferencesImpl(Project project) {
         this.project = project;
@@ -97,7 +96,11 @@ public class ProjectPreferencesImpl implements FileChangeListener, EditablePrefe
 
             autoResolve = Utilities.getBoolean(properties.get(IVY_AUTO_RESOLVE_KEY), true);
             useCachePath = Utilities.getBoolean(properties.get(IVY_USE_CACHE_PATH_KEY), true);
-            
+            allConfsSelected = Utilities.getBoolean(properties.get(IVY_ALL_CONFS_SELECTED_KEY), true);
+            if (!allConfsSelected){
+                Collection<String> savedSelectedConfs = Utilities.stringToCollection(properties.get(IVY_SELECTED_CONFS_KEY));
+                selectedConfs.addAll(savedSelectedConfs);
+            }
         } else {
             String templateName = optionsLookup.getDefaultTemplateName();
             projectRetrieveSettings = optionsLookup.getIvyRetrieveSettingsTemplate(templateName);
@@ -190,7 +193,12 @@ public class ProjectPreferencesImpl implements FileChangeListener, EditablePrefe
         properties.put(IVY_FILE_KEY, getIvyFileString());
         properties.put(IVY_SETTINGS_FILE_KEY, getIvySettingsString());
         properties.put(IVY_PROPERTIES_FILES_KEY, Utilities.collectionToString(getIvyPropertiesFilesString()));
-
+        properties.put(IVY_ALL_CONFS_SELECTED_KEY, Boolean.toString(allConfsSelected));
+        if (allConfsSelected){
+            properties.remove(IVY_SELECTED_CONFS_KEY);
+        }else{
+            properties.put(IVY_SELECTED_CONFS_KEY, Utilities.collectionToString(selectedConfs));
+        }
         properties.put(IvyRetrieveSettings.PROP_JAR_TYPES, Utilities.collectionToString(projectRetrieveSettings.getJarTypes()));
 
     }
@@ -227,7 +235,9 @@ public class ProjectPreferencesImpl implements FileChangeListener, EditablePrefe
 
         properties.remove(IvyRetrieveSettings.PROP_JAR_TYPES);
         properties.remove(IVY_USE_CACHE_PATH_KEY);
-
+        properties.remove(IVY_SELECTED_CONFS_KEY);
+        properties.remove(IVY_ALL_CONFS_SELECTED_KEY);
+        
         deleteIvyRetrieveSettingsProject(properties);
     }
 
@@ -528,4 +538,20 @@ public class ProjectPreferencesImpl implements FileChangeListener, EditablePrefe
     public void setUseCachePath(boolean useCachePath) {
         this.useCachePath = useCachePath;
     }
+
+    @Override
+    public Collection<String> getSelectedConfs() {
+        return selectedConfs;
+    }
+
+    @Override
+    public boolean isAllConfsSelected() {
+        return allConfsSelected;
+    }
+
+    @Override
+    public void setAllConfsSelected(boolean allConfsSelected) {
+        this.allConfsSelected = allConfsSelected;
+    }
+    
 }

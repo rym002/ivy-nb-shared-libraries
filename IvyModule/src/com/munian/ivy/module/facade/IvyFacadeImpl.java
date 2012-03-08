@@ -1,10 +1,10 @@
 package com.munian.ivy.module.facade;
 
-import com.munian.ivy.module.options.IvyRetrieveSettings;
 import com.munian.ivy.module.exceptions.IvyException;
+import com.munian.ivy.module.options.IvyRetrieveSettings;
+import com.munian.ivy.module.preferences.ProjectPreferences;
 import com.munian.ivy.module.ui.io.IOTabIvyLogger;
 import com.munian.ivy.module.ui.io.IvyProgressHandleListener;
-import com.munian.ivy.module.preferences.ProjectPreferences;
 import com.munian.ivy.module.ui.io.IvyProgressHandleTransferListener;
 import java.io.File;
 import java.io.FileInputStream;
@@ -14,10 +14,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 import org.apache.ivy.Ivy;
 import org.apache.ivy.core.IvyPatternHelper;
 import org.apache.ivy.core.cache.RepositoryCacheManager;
@@ -27,6 +24,7 @@ import org.apache.ivy.core.module.descriptor.ModuleDescriptor;
 import org.apache.ivy.core.report.ArtifactDownloadReport;
 import org.apache.ivy.core.report.ConfigurationResolveReport;
 import org.apache.ivy.core.report.ResolveReport;
+import org.apache.ivy.core.resolve.IvyNode;
 import org.apache.ivy.core.resolve.ResolveOptions;
 import org.apache.ivy.core.retrieve.RetrieveOptions;
 import org.apache.ivy.core.settings.IvySettings;
@@ -191,9 +189,14 @@ public class IvyFacadeImpl implements IvyFacade {
                     ivy.getEventManager().addIvyListener(transferListener);
                     ivy.getEventManager().addTransferListener(ivyProgressHandleTransferListener);
                     URL ivyFileLocation = projectPreferences.getIvyFile().getURL();
-                    String[] confs = getConfs(projectPreferences.getIvyFile(), projectPreferences.getIvySettingsFile(), projectPreferences.getIvyPropertiesFiles());
+                    String[] confs;
+                    if (projectPreferences.isAllConfsSelected()){
+                        confs = getConfs(ivyFileLocation, ivy);
+                    }else{
+                        confs = projectPreferences.getSelectedConfs().toArray(new String[0]);
+                    }
 
-                    transferListener.setConf(confs.toString());
+                    transferListener.setConf(Arrays.deepToString(confs));
                     ResolveOptions resolveOption = new ResolveOptions().setConfs(confs);
                     resolveOption.setValidate(ivy.getSettings().doValidate());
                     ResolveReport report = ivy.resolve(ivyFileLocation, resolveOption);
@@ -403,7 +406,8 @@ public class IvyFacadeImpl implements IvyFacade {
         getConfs(ivyFile, settingsFile, propertiesFiles);
     }
 
-    private String[] getConfs(String ivyFile, String settingsFile, Collection<String> propertiesFiles) throws IvyException {
+    @Override
+    public String[] getConfs(String ivyFile, String settingsFile, Collection<String> propertiesFiles) throws IvyException {
         try {
             URL ivyFileURL = new URI(ivyFile).toURL();
             URL settingsFileURL = getSettingsURL(settingsFile);

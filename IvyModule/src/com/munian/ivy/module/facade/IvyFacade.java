@@ -27,4 +27,6 @@ public interface IvyFacade {
     public void testIvyFile(String ivyFile, String settingsFile, Collection<String> propertiesFiles) throws IvyException;
     
     public Ivy getIvy(Project project) throws IvyException;
+    
+    public String[] getConfs(String ivyFile, String settingsFile, Collection<String> propertiesFiles) throws IvyException;
 }

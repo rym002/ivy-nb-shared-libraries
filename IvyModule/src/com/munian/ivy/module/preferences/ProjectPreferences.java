@@ -38,4 +38,8 @@ public interface ProjectPreferences extends PropertyChangeListener,PropertyChang
     public void autoResolveProject();
     
     public boolean isUseCachePath();
+    
+    public Collection<String> getSelectedConfs();
+    
+    public boolean isAllConfsSelected();
 }
