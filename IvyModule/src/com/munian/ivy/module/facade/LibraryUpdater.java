@@ -1,7 +1,7 @@
 package com.munian.ivy.module.facade;
 
-import com.munian.ivy.module.util.ProjectUtility;
 import com.munian.ivy.module.preferences.ProjectPreferences;
+import com.munian.ivy.module.util.ProjectUtility;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;

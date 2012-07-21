@@ -26,6 +26,7 @@
                 <package>org.apache.ivy.plugins.repository</package>
                 <package>org.apache.ivy.util</package>
                 <package>org.apache.ivy.util.extendable</package>
+                <package>org.apache.ivy.util.filter</package>
                 <package>org.apache.ivyde.common.completion</package>
                 <package>org.apache.ivyde.common.ivyfile</package>
                 <package>org.apache.ivyde.common.ivysettings</package>

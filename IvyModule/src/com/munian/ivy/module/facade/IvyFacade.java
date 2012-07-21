@@ -3,6 +3,7 @@ package com.munian.ivy.module.facade;
 import com.munian.ivy.module.exceptions.IvyException;
 import java.util.Collection;
 import org.apache.ivy.Ivy;
+import org.apache.ivy.core.module.descriptor.ModuleDescriptor;
 import org.netbeans.api.project.Project;
 
 /**
@@ -29,4 +30,6 @@ public interface IvyFacade {
     public Ivy getIvy(Project project) throws IvyException;
     
     public String[] getConfs(String ivyFile, String settingsFile, Collection<String> propertiesFiles) throws IvyException;
+    
+    public ModuleDescriptor getModuleDescriptor(Project project) throws IvyException;
 }
